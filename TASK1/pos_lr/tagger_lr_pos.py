@@ -26,7 +26,7 @@ def formatdata(formatted_sentences,formatted_labels,file_name):
 			if line[1]=="PUNCT":
 				labels.append(line[0]+"P")		# identifies puntuations with P, without losing information. (i.e. "," is still comma but in the form of ".P", thus distinguishable from ".P")
 			else:
-				labels.append(line[2])	
+				labels.append(line[2])
 		else:									#for empty line (i.e end of sentence)
 			formatted_sentences.append(tokens)
 			formatted_labels.append(labels)
@@ -45,9 +45,9 @@ def creatdict(sentence,index,pos):	#pos=="" for features of tokens;  else relati
 		"allcap"+pos:word.isupper(),					# is all capitals?
 		"caps_inside"+pos:word==wordlow,				# has capitals inside?
 		"nums?"+pos:any(i.isdigit() for i in word),		# has digits?
-	}	
+	}
 	return dict
-	
+
 
 def feature_extractor(sentence,index):
 	features=creatdict(sentence,index,"")
@@ -56,20 +56,20 @@ def feature_extractor(sentence,index):
 
 
 
-			
-def creatsets(file_name):	
+
+def creatsets(file_name):
 	sentences=[]
 	s_labels=[]
-	formatdata(sentences,s_labels,file_name)	
+	formatdata(sentences,s_labels,file_name)
 	limit=int(len(sentences)/5)###############################********************#####################
 	sentences=sentences[:limit]##############
 	s_labels=s_labels[:limit]####################
-	
-	#print(len(sentences),len(s_labels))			
-	
+
+	#print(len(sentences),len(s_labels))
+
 	print("Feature extraction...")
 	delimit=int((len(sentences)*8)/10)
-	
+
 	features=[]		#X_train
 	labels=[]		#Y_train
 	for i in range(0,delimit):
@@ -92,41 +92,41 @@ def creatsets(file_name):
 	del sentences
 	del s_labels
 
-	
+
 	print("Vectorizing...")
 	vectorizer=DictVectorizer()
 	visa=vectorizer.fit(features)
 	v_ized=visa.transform(features)
-	
+
 	training_data=[v_ized,labels]
 
 
 	t_v_ized=visa.transform(t_features)
 	test_data=[t_v_ized,t_labels]
-	
-	
+
+
 	with open('pos_lr_vectorizer.pickle', 'wb') as file:
-		pickle.dump(visa, file)	
-	
+		pickle.dump(visa, file)
+
 	with open('pos_lr_train.data', 'wb') as file:
 		pickle.dump(training_data, file)
 
 	with open('pos_lr_test.data', 'wb') as file:
 		pickle.dump(test_data, file)
 
-	return training_data, test_data		
-	
+	return training_data, test_data
 
 
-def train(training_data):	
+
+def train(training_data):
 	print("Training...")
-	
+
 	features=training_data[0]
-	labels=training_data[1]	
-	
-	classifier.fit(features,labels)	
-	
-		
+	labels=training_data[1]
+
+	classifier.fit(features,labels)
+
+
 
 def test(test_data):
 	print("Testing...")
@@ -141,11 +141,11 @@ def test(test_data):
 
 	end_p=["RP","NFP","VBP","NNP","PRP","WP"]
 	for i in range(0,len(labels)):
-		if y_true[i][-1]=="P" and y_true[i][-1] not in end_p: 
+		if y_true[i][-1]=="P" and y_true[i][-1] not in end_p:
 			y_true[i]="PUNCT"
-		if y_pred[i][-1]=="P" and y_pred[i][-1] not in end_p: 
+		if y_pred[i][-1]=="P" and y_pred[i][-1] not in end_p:
 			y_pred[i]="PUNCT"
-		
+
 
 	precision=sklearn.metrics.precision_score(y_true, y_pred,average='micro')
 	recall=sklearn.metrics.recall_score(y_true, y_pred,average='micro')
@@ -155,7 +155,7 @@ def test(test_data):
 	print("f1:",f1)
 	print("precision:",precision)
 	print("recall:",recall)
-	
+
 
 
 def save(filename):	#filename shall end with .pickle and type(filename)=string
@@ -163,8 +163,8 @@ def save(filename):	#filename shall end with .pickle and type(filename)=string
 	with open(filename, "wb") as f:
 		pickle.dump(classifier, f)
 	return
-		
-		
+
+
 def load(filename):	#filename shall end with .pickle and type(filename)=string
 	print("Loading classifier...")
 	with open(filename, "rb") as f:
@@ -179,45 +179,45 @@ def load_vectorizer(filename):	#filename shall end with .pickle and type(filenam
 def tag(sentence):
 	vectorizer=load_vectorizer('pos_lr_vectorizer.pickle')
 	classifier=load("pos_lr.pickle")
-	
+
 	t_features=[]
-	for j in range(0,len(sentence)):	
+	for j in range(0,len(sentence)):
 		t_features.append(feature_extractor(sentence,j))
-		
-	ret=classifier.predict(vectorizer.transform(t_features))	
-	
+
+	ret=classifier.predict(vectorizer.transform(t_features))
+
 	end_p=["RP","NFP","VBP","NNP","PRP","WP"]
 	for i in range(0,len(ret)):
-		if ret[i][-1]=="P" and ret[i][-1] not in end_p: 
+		if ret[i][-1]=="P" and ret[i][-1] not in end_p:
 			ret[i]="PUNCT"
-		
-	return ret	
+
+	return ret
 
 
 if __name__ =="__main__":
 
 	classifier=LogisticRegression(max_iter=1000,multi_class='multinomial')
-	
+
 	training_data, test_data=creatsets("en-ud-train.conllu")
-	
+
 	with open('pos_lr_train.data', 'rb') as file:
 		training_data=pickle.load(file)
 	file.close()
-	
+
 	train(training_data)
-	
+
 	save("pos_lr.pickle")
-	
+
 	with open('pos_lr_test.data', 'rb') as file:
 		test_data=pickle.load(file)
 	file.close()
-	
-	
+
+
 	classifier=load("pos_lr.pickle")
-	
+
 	test(test_data)
-	
-	
+
+
 	s=['The',
 	'guitarist',
 	'died',
@@ -230,5 +230,5 @@ if __name__ =="__main__":
 	'aged',
 	'27',
 	'.']
-	
+
 	print(tag(s))
