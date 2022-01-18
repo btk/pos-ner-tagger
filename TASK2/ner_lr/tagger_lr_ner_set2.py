@@ -8,12 +8,14 @@ import string
 import random
 import pickle
 import numpy
+import re
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction import DictVectorizer
 from do_not_change import tag as chunker
 from nltk.stem.snowball import SnowballStemmer
 from nltk.corpus import stopwords
+from string import punctuation
 
 
 
@@ -52,13 +54,18 @@ def formatdata(formatted_sentences,formatted_labels,formatted_postags,formatted_
 
 def creatdict(sentence,index,pos,postags,chunktags):	#pos=="" <-> featuresofword  else, relative pos (str) is pos
 	word=sentence[index]
-	wordlow=word.lower()
+	wordhyphen = any(p in word for p in "-")
+	wordapos = any(p in word for p in "'")
+	wordlength = len(word);
 	dict={
-		"wrd"+pos:wordlow,
-		"cap"+pos:word[0].isupper(),
-		"allcap"+pos:word.isupper(),
-		"caps_inside"+pos:word==wordlow,
-		"nums?"+pos:any(i.isdigit() for i in word),
+		"word"+pos:word.lower(),
+		"contains_hyphen"+pos:wordhyphen,
+		"contains_apostrophe"+pos:wordapos,
+		"capitalized"+pos:word[0].isupper(),
+		"all_capital"+pos:word.isupper(),
+		"caps_inside"+pos:word==word.lower(),
+		"is_alnum"+pos:word.isalnum(),
+		"stemmed"+pos:re.sub(r'(.{2,}?)([aeiougyn]+$)',r'\1', word)
 	}
 	return dict
 

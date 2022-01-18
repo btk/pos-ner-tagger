@@ -56,12 +56,24 @@ def formatdata(formatted_sentences,formatted_labels,formatted_postags,formatted_
 def creatdict(sentence,index,pos,postags,chunktags):	#pos=="" <-> featuresofword  else, relative pos (str) is pos
 	word=sentence[index]
 	wordlow=word.lower()
+	wordpunct = any(p in wordlow for p in punctuation)
+	if index == 0:
+		prev_word = "";
+	else:
+		prev_word = sentence[index-1];
+
+	if index == len(sentence)-1:
+		next_word = "";
+	else:
+		next_word = sentence[index+1];
+
 	dict={
-		"wrd"+pos:wordlow,
-		"cap"+pos:word[0].isupper(),
-		"allcap"+pos:word.isupper(),
-		"caps_inside"+pos:word==wordlow,
-		"nums?"+pos:any(i.isdigit() for i in word),
+		"word"+pos:wordlow,
+		"last_1"+pos:wordlow[-1:],
+		"last_2"+pos:wordlow[-2:],
+		"prev_word"+pos:prev_word,
+		"next_word"+pos:next_word,
+		"capitalized"+pos:word[0].isupper(),
 	}
 	return dict
 
